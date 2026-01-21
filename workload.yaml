@@ -1,0 +1,56 @@
+name: azure-infrastructure
+version: "0.1.0"
+type: runtime
+description: "Azure infrastructure workloads with goal-seeking agents"
+
+# Python package info
+package:
+  name: haymaker-azure-workloads
+  entrypoint: haymaker_azure_workloads:AzureInfrastructureWorkload
+
+# Target requirements (what this workload operates on)
+targets:
+  - type: azure_subscription
+    required_roles:
+      - Contributor
+      - User Access Administrator
+    description: "Azure subscription for deploying infrastructure scenarios"
+
+# Configuration schema
+config_schema:
+  scenario:
+    type: string
+    required: true
+    description: "Name of the scenario to execute (e.g., linux-vm-web-server)"
+  duration_hours:
+    type: integer
+    default: 8
+    description: "Duration of operations phase in hours"
+  region:
+    type: string
+    default: "eastus"
+    description: "Azure region for deployment"
+
+# Available scenarios (populated from scenarios/ directory)
+scenarios:
+  compute:
+    - linux-vm-web-server
+    - windows-vm-iis
+    - app-service-python
+    - azure-functions-http
+    - vm-scale-set
+  databases:
+    - mysql-wordpress
+    - postgresql-django
+    - cosmos-db-api
+  networking:
+    - virtual-network
+    - load-balancer
+    - application-gateway
+  security:
+    - key-vault-secrets
+    - managed-identity
+  ai-ml:
+    - cognitive-services
+    - azure-openai
+    - ml-workspace
