@@ -14,7 +14,7 @@ This package provides workloads that execute Azure infrastructure scenarios usin
 
 ```bash
 # Install via haymaker CLI
-haymaker workload install https://github.com/org/haymaker-azure-workloads
+haymaker workload install https://github.com/rysweet/haymaker-azure-workloads
 
 # Or via pip
 pip install haymaker-azure-workloads
@@ -122,13 +122,13 @@ az group delete --name mygroup --yes --no-wait
 
 - Azure subscription with Contributor role
 - Azure CLI installed and authenticated
-- Agent Haymaker platform installed
+- [Agent Haymaker](https://github.com/rysweet/agent-haymaker) platform installed
 
 ## Development
 
 ```bash
 # Clone
-git clone https://github.com/org/haymaker-azure-workloads
+git clone https://github.com/rysweet/haymaker-azure-workloads
 cd haymaker-azure-workloads
 
 # Install in dev mode
