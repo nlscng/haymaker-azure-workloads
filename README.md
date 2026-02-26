@@ -169,6 +169,10 @@ pip install -e ".[dev]"
 pytest
 ```
 
+## Documentation
+
+- [LLM-Enhanced Agents Guide](docs/llm-enhanced-agents.md) - Error recovery, goal evaluation, operations commands, fallback behavior
+
 ## License
 
 MIT
