@@ -1,3 +1,8 @@
+---
+layout: default
+title: LLM-Enhanced Agents
+---
+
 # LLM-Enhanced Goal-Seeking Agents
 
 The Azure infrastructure workload supports optional LLM integration for adaptive scenario execution via `LLMGoalSeekingAgent`.
