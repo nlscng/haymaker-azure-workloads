@@ -1,6 +1,0 @@
-{"timestamp": "2026-02-26T23:02:11.375447", "metric": "power_steering_disabled_checks", "value": 1, "hook": "stop"}
-{"timestamp": "2026-02-26T23:02:11.375664", "metric": "reflection_no_config", "value": 1, "hook": "stop"}
-{"timestamp": "2026-02-26T23:15:29.798506", "metric": "power_steering_disabled_checks", "value": 1, "hook": "stop"}
-{"timestamp": "2026-02-26T23:15:29.798653", "metric": "reflection_no_config", "value": 1, "hook": "stop"}
-{"timestamp": "2026-02-26T23:20:27.893632", "metric": "power_steering_disabled_checks", "value": 1, "hook": "stop"}
-{"timestamp": "2026-02-26T23:20:27.893802", "metric": "reflection_no_config", "value": 1, "hook": "stop"}
