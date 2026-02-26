@@ -11,9 +11,7 @@ Public API (the "studs"):
     LLMGoalSeekingAgent: Enhanced agent with LLM capabilities
 """
 
-import asyncio
 import logging
-from pathlib import Path
 
 from .agent import GoalSeekingAgent
 from .scenarios import Scenario
@@ -62,9 +60,7 @@ class LLMGoalSeekingAgent(GoalSeekingAgent):
         """Whether an LLM client is available."""
         return self._llm_client is not None
 
-    async def _handle_command_error(
-        self, command: str, error: str, phase: str
-    ) -> str | None:
+    async def _handle_command_error(self, command: str, error: str, phase: str) -> str | None:
         """Ask LLM for error recovery suggestions.
 
         Args:

@@ -147,12 +147,12 @@ class ScenarioLoader:
             return []
 
         # Get content after the pattern
-        after = content[match.end():]
+        after = content[match.end() :]
 
         # Find the next major section (##) to limit scope
         next_section = re.search(r"\n##\s+[A-Z]", after)
         if next_section:
-            after = after[:next_section.start()]
+            after = after[: next_section.start()]
 
         # Extract all bash blocks
         bash_pattern = r"```bash\n(.*?)```"

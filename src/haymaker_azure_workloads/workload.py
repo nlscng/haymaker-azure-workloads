@@ -17,7 +17,7 @@ from agent_haymaker import (
 )
 from agent_haymaker.workloads.models import CleanupReport, DeploymentStatus
 
-from .scenarios import ScenarioLoader, Scenario
+from .scenarios import ScenarioLoader
 from .agent import GoalSeekingAgent
 
 
@@ -63,8 +63,7 @@ class AzureInfrastructureWorkload(WorkloadBase):
         if not scenario:
             available = self._scenario_loader.list_scenarios()
             raise ValueError(
-                f"Scenario '{scenario_name}' not found. "
-                f"Available: {', '.join(available)}"
+                f"Scenario '{scenario_name}' not found. Available: {', '.join(available)}"
             )
 
         # Choose agent class based on LLM availability
@@ -140,6 +139,7 @@ class AzureInfrastructureWorkload(WorkloadBase):
 
         if not state:
             from agent_haymaker.workloads.base import DeploymentNotFoundError
+
             raise DeploymentNotFoundError(f"Deployment {deployment_id} not found")
 
         return state
@@ -203,7 +203,7 @@ class AzureInfrastructureWorkload(WorkloadBase):
         self, deployment_id: str, follow: bool = False, lines: int = 100
     ) -> AsyncIterator[str]:
         """Stream logs for a deployment."""
-        state = await self.get_status(deployment_id)
+        await self.get_status(deployment_id)  # Validates deployment exists
         agent = self._agents.get(deployment_id)
 
         if agent:
