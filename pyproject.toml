@@ -9,11 +9,6 @@ authors = [
     { name = "Haymaker Team" }
 ]
 keywords = ["azure", "haymaker", "workload", "telemetry", "infrastructure"]
-
-[project.urls]
-Homepage = "https://github.com/rysweet/haymaker-azure-workloads"
-Repository = "https://github.com/rysweet/haymaker-azure-workloads"
-Issues = "https://github.com/rysweet/haymaker-azure-workloads/issues"
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",
@@ -22,7 +17,6 @@ classifiers = [
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
 ]
-
 dependencies = [
     "agent-haymaker>=0.1.0",
     "azure-cli-core>=2.50.0",
@@ -39,6 +33,11 @@ dev = [
 ai = [
     "agent-haymaker[llm]>=0.1.0",
 ]
+
+[project.urls]
+Homepage = "https://github.com/rysweet/haymaker-azure-workloads"
+Repository = "https://github.com/rysweet/haymaker-azure-workloads"
+Issues = "https://github.com/rysweet/haymaker-azure-workloads/issues"
 
 # Register workload with agent-haymaker
 [project.entry-points."agent_haymaker.workloads"]
