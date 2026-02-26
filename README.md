@@ -110,6 +110,36 @@ az group delete --name mygroup --yes --no-wait
 ```
 ```
 
+## LLM-Enhanced Agents
+
+The workload supports optional LLM integration for adaptive scenario execution. When enabled, the `LLMGoalSeekingAgent` extends the standard agent with:
+
+- **Adaptive error recovery** - When a command fails, the LLM suggests alternative commands to achieve the same goal
+- **Goal evaluation** - After execution, the LLM assesses whether the scenario objectives were met
+- **Operations command generation** - The LLM generates monitoring and verification commands appropriate for the deployed scenario
+
+### Enabling LLM Integration
+
+```bash
+haymaker deploy azure-infrastructure \
+  --config scenario=linux-vm-web-server \
+  --config enable_llm=true
+```
+
+### Environment Variables
+
+LLM integration requires the `agent-haymaker[llm]` optional dependency and appropriate environment variables for your LLM provider (e.g., `AZURE_OPENAI_ENDPOINT`, `AZURE_OPENAI_API_KEY`, or `ANTHROPIC_API_KEY`). See the [agent-haymaker LLM docs](https://github.com/rysweet/agent-haymaker) for provider configuration.
+
+### Fallback Behavior
+
+When LLM is unavailable (not installed, misconfigured, or API errors), the agent falls back to standard static command execution. No scenario functionality is lost -- LLM features are purely additive.
+
+Install the AI extras to enable LLM support:
+
+```bash
+pip install "haymaker-azure-workloads[ai]"
+```
+
 ## Configuration
 
 | Option | Type | Default | Description |
@@ -117,6 +147,7 @@ az group delete --name mygroup --yes --no-wait
 | `scenario` | string | required | Scenario name to execute |
 | `duration_hours` | int | 8 | Operations phase duration |
 | `region` | string | eastus | Azure region |
+| `enable_llm` | bool | false | Enable LLM-powered adaptive agent behavior |
 
 ## Requirements
 
@@ -137,6 +168,10 @@ pip install -e ".[dev]"
 # Run tests
 pytest
 ```
+
+## Documentation
+
+- [LLM-Enhanced Agents Guide](docs/llm-enhanced-agents.md) - Error recovery, goal evaluation, operations commands, fallback behavior
 
 ## License
 

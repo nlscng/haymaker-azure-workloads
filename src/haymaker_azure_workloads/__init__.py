@@ -13,10 +13,12 @@ Scenarios include:
 """
 
 from .workload import AzureInfrastructureWorkload
+from .llm_agent import LLMGoalSeekingAgent
 
 __version__ = "0.1.0"
 
 __all__ = [
     "AzureInfrastructureWorkload",
+    "LLMGoalSeekingAgent",
     "__version__",
 ]

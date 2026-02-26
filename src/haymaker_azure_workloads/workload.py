@@ -17,7 +17,7 @@ from agent_haymaker import (
 )
 from agent_haymaker.workloads.models import CleanupReport, DeploymentStatus
 
-from .scenarios import ScenarioLoader, Scenario
+from .scenarios import ScenarioLoader
 from .agent import GoalSeekingAgent
 
 
@@ -63,9 +63,23 @@ class AzureInfrastructureWorkload(WorkloadBase):
         if not scenario:
             available = self._scenario_loader.list_scenarios()
             raise ValueError(
-                f"Scenario '{scenario_name}' not found. "
-                f"Available: {', '.join(available)}"
+                f"Scenario '{scenario_name}' not found. Available: {', '.join(available)}"
             )
+
+        # Choose agent class based on LLM availability
+        agent_class = GoalSeekingAgent
+        llm_client = None
+        if config.workload_config.get("enable_llm", False):
+            try:
+                from agent_haymaker.llm import LLMConfig, create_llm_client
+                from .llm_agent import LLMGoalSeekingAgent
+
+                llm_config = LLMConfig.from_env()
+                llm_client = create_llm_client(llm_config)
+                agent_class = LLMGoalSeekingAgent
+                self.log(f"LLM-enhanced agent enabled (provider: {llm_config.provider})")
+            except Exception as e:
+                self.log(f"LLM unavailable, using standard agent: {e}", level="WARNING")
 
         # Generate deployment ID
         deployment_id = f"azure-{uuid.uuid4().hex[:8]}"
@@ -85,12 +99,13 @@ class AzureInfrastructureWorkload(WorkloadBase):
             metadata={
                 "scenario_description": scenario.description,
                 "technology_area": scenario.technology_area,
+                "llm_enabled": llm_client is not None,
             },
         )
         self._deployments[deployment_id] = state
 
         # Create and start the goal-seeking agent
-        agent = GoalSeekingAgent(
+        agent_kwargs = dict(
             deployment_id=deployment_id,
             scenario=scenario,
             duration_hours=duration_hours,
@@ -98,6 +113,9 @@ class AzureInfrastructureWorkload(WorkloadBase):
                 deployment_id, phase, status
             ),
         )
+        if llm_client is not None:
+            agent_kwargs["llm_client"] = llm_client
+        agent = agent_class(**agent_kwargs)
         self._agents[deployment_id] = agent
 
         # Start execution (non-blocking)
@@ -121,6 +139,7 @@ class AzureInfrastructureWorkload(WorkloadBase):
 
         if not state:
             from agent_haymaker.workloads.base import DeploymentNotFoundError
+
             raise DeploymentNotFoundError(f"Deployment {deployment_id} not found")
 
         return state
@@ -184,7 +203,7 @@ class AzureInfrastructureWorkload(WorkloadBase):
         self, deployment_id: str, follow: bool = False, lines: int = 100
     ) -> AsyncIterator[str]:
         """Stream logs for a deployment."""
-        state = await self.get_status(deployment_id)
+        await self.get_status(deployment_id)  # Validates deployment exists
         agent = self._agents.get(deployment_id)
 
         if agent:
@@ -215,6 +234,11 @@ class AzureInfrastructureWorkload(WorkloadBase):
                     f"Scenario '{scenario_name}' not found. "
                     f"Available: {', '.join(available[:5])}..."
                 )
+
+        # Validate enable_llm type if provided
+        enable_llm = config.workload_config.get("enable_llm")
+        if enable_llm is not None and not isinstance(enable_llm, bool):
+            errors.append("'enable_llm' must be a boolean value")
 
         return errors
 

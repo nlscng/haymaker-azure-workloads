@@ -92,7 +92,7 @@ class GoalSeekingAgent:
             # Get cleanup commands from scenario
             cleanup_commands = self.scenario.phases.get("cleanup", "")
             if cleanup_commands:
-                self._log(f"Executing cleanup commands")
+                self._log("Executing cleanup commands")
                 # In real implementation, execute via Claude or subprocess
                 cleanup_result["details"].append("Cleanup commands executed")
                 cleanup_result["resources_deleted"] = 5  # Placeholder
@@ -105,9 +105,7 @@ class GoalSeekingAgent:
 
         return cleanup_result
 
-    async def get_logs(
-        self, follow: bool = False, lines: int = 100
-    ) -> AsyncIterator[str]:
+    async def get_logs(self, follow: bool = False, lines: int = 100) -> AsyncIterator[str]:
         """Stream agent logs."""
         # Return recent logs
         for line in self._logs[-lines:]:

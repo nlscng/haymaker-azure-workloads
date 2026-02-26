@@ -30,6 +30,10 @@ config_schema:
     type: string
     default: "eastus"
     description: "Azure region for deployment"
+  enable_llm:
+    type: boolean
+    default: false
+    description: "Enable LLM-powered adaptive agent behavior"
 
 # Available scenarios (populated from scenarios/ directory)
 scenarios:
