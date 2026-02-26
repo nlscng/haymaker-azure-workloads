@@ -36,6 +36,9 @@ dev = [
     "pytest-cov>=4.0.0",
     "ruff>=0.1.0",
 ]
+ai = [
+    "agent-haymaker[llm]>=0.1.0",
+]
 
 # Register workload with agent-haymaker
 [project.entry-points."agent_haymaker.workloads"]
