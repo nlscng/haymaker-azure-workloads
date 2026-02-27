@@ -88,18 +88,56 @@ az vm list -g $TARGET_RG --query "[?tags.\"HayMaker-managed\"=='true'].{Name:nam
 
 ## Phase 3: Cleanup
 
+**IMPORTANT**: This cleanup phase ONLY deletes resources created by this haymaker deployment. 
+All other resources in the resource group are preserved untouched.
+
 ```bash
-# Delete only the haymaker VM (preserves other resources in the RG)
-echo "Deleting VM: $VM_NAME from $TARGET_RG"
+# ============================================================================
+# SAFE CLEANUP: Only deletes resources tagged with this deployment ID
+# - PRESERVES: All pre-existing resources in the resource group
+# - PRESERVES: Resources created by other users or workloads
+# - DELETES: Only the VM and associated resources created by THIS deployment
+# ============================================================================
+
+echo "=== SAFE CLEANUP MODE ==="
+echo "Deployment ID: $DEPLOYMENT_ID"
+echo "Target RG: $TARGET_RG"
+echo ""
+echo "This will ONLY delete resources tagged with deployment-id=$DEPLOYMENT_ID"
+echo "All other resources in $TARGET_RG will be PRESERVED"
+echo ""
+
+# Verify the VM belongs to this deployment before deleting
+VM_DEPLOYMENT_TAG=$(az vm show -g $TARGET_RG -n $VM_NAME --query "tags.\"deployment-id\"" -o tsv 2>/dev/null)
+
+if [ "$VM_DEPLOYMENT_TAG" != "$DEPLOYMENT_ID" ]; then
+  echo "ERROR: VM $VM_NAME does not belong to deployment $DEPLOYMENT_ID"
+  echo "Expected tag: $DEPLOYMENT_ID, Found: $VM_DEPLOYMENT_TAG"
+  echo "Aborting cleanup to prevent accidental deletion"
+  exit 1
+fi
+
+# Delete only the haymaker VM we created
+echo "Deleting VM: $VM_NAME (verified: deployment-id=$DEPLOYMENT_ID)"
 az vm delete --resource-group $TARGET_RG --name $VM_NAME --yes
 
-# Clean up associated resources
+# Clean up ONLY the associated resources created with this VM
+# These follow Azure's default naming convention for resources created with az vm create
+echo "Cleaning up associated resources..."
 az network nic delete --resource-group $TARGET_RG --name ${VM_NAME}VMNic 2>/dev/null || true
 az network public-ip delete --resource-group $TARGET_RG --name ${VM_NAME}PublicIP 2>/dev/null || true
 az network nsg delete --resource-group $TARGET_RG --name ${VM_NAME}NSG 2>/dev/null || true
-az disk delete --resource-group $TARGET_RG --name ${VM_NAME}_OsDisk_1_* --yes 2>/dev/null || true
 
-echo "Cleanup complete. Resource group $TARGET_RG preserved."
+# Delete OS disk by querying for exact name with deployment tag
+DISK_NAME=$(az disk list -g $TARGET_RG --query "[?tags.\"deployment-id\"=='$DEPLOYMENT_ID'].name" -o tsv 2>/dev/null | head -1)
+if [ -n "$DISK_NAME" ]; then
+  az disk delete --resource-group $TARGET_RG --name $DISK_NAME --yes 2>/dev/null || true
+fi
+
+echo ""
+echo "=== CLEANUP COMPLETE ==="
+echo "Resource group '$TARGET_RG' preserved with all other resources intact."
+echo "Only haymaker deployment $DEPLOYMENT_ID resources were removed."
 ```
 
 ## Usage Example

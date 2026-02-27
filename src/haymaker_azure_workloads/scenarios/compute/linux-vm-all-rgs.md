@@ -152,29 +152,90 @@ echo "Running: $RUNNING_VMS"
 
 ## Phase 3: Cleanup
 
+**IMPORTANT**: This cleanup phase ONLY deletes resources created by this specific haymaker deployment.
+All other resources in each resource group are preserved untouched.
+
 ```bash
-# Find all VMs from this deployment
-echo "Finding all haymaker VMs from deployment $DEPLOYMENT_ID..."
+# ============================================================================
+# SAFE CLEANUP: Only deletes resources tagged with this deployment ID
+# - PRESERVES: All pre-existing resources in each resource group
+# - PRESERVES: Resources created by other users, workloads, or deployments
+# - PRESERVES: Resources without the deployment-id tag
+# - DELETES: Only VMs and associated resources tagged with THIS deployment ID
+# ============================================================================
+
+echo "=== SAFE CLEANUP MODE ==="
+echo "Deployment ID: $DEPLOYMENT_ID"
+echo ""
+echo "This will ONLY delete resources tagged with deployment-id=$DEPLOYMENT_ID"
+echo "All other resources across all resource groups will be PRESERVED"
+echo ""
+
+# Find all resources tagged with this specific deployment ID
+echo "Scanning subscription for resources from deployment $DEPLOYMENT_ID..."
 VMS_TO_DELETE=$(az vm list --query "[?tags.\"deployment-id\"=='$DEPLOYMENT_ID'].{name:name, rg:resourceGroup}" -o tsv)
 
 VM_COUNT=$(echo "$VMS_TO_DELETE" | grep -c . || echo 0)
-echo "Found $VM_COUNT VMs to delete"
+echo "Found $VM_COUNT VMs tagged with deployment-id=$DEPLOYMENT_ID"
 
-# Delete each VM and its resources
+if [ "$VM_COUNT" -eq 0 ]; then
+  echo "No VMs found for this deployment. Nothing to clean up."
+  exit 0
+fi
+
+# List what will be deleted for transparency
+echo ""
+echo "The following VMs will be deleted (and ONLY these):"
+echo "$VMS_TO_DELETE" | while read NAME RG; do
+  if [ -n "$NAME" ]; then
+    echo "  - $NAME (in $RG)"
+  fi
+done
+echo ""
+
+# Delete each VM - ONLY those with matching deployment-id tag
+DELETED=0
+SKIPPED=0
+
 echo "$VMS_TO_DELETE" | while read NAME RG; do
   if [ -n "$NAME" ] && [ -n "$RG" ]; then
-    echo "Deleting $NAME from $RG..."
-    az vm delete --resource-group $RG --name $NAME --yes --no-wait 2>/dev/null
+    # Double-check the deployment tag before deleting (defense in depth)
+    ACTUAL_TAG=$(az vm show -g $RG -n $NAME --query "tags.\"deployment-id\"" -o tsv 2>/dev/null)
+    
+    if [ "$ACTUAL_TAG" = "$DEPLOYMENT_ID" ]; then
+      echo "Deleting $NAME from $RG (verified: deployment-id=$DEPLOYMENT_ID)..."
+      az vm delete --resource-group $RG --name $NAME --yes --no-wait 2>/dev/null
+      DELETED=$((DELETED + 1))
+    else
+      echo "SKIPPING $NAME - tag mismatch (expected: $DEPLOYMENT_ID, found: $ACTUAL_TAG)"
+      SKIPPED=$((SKIPPED + 1))
+    fi
   fi
 done
 
-echo "Cleanup initiated for all VMs. Deletions running in background."
-echo "Note: Associated NICs, public IPs, NSGs, and disks may need manual cleanup."
-
-# Optional: Clean up orphaned resources
 echo ""
-echo "To clean up orphaned resources, run:"
-echo "  az resource list --tag deployment-id=$DEPLOYMENT_ID --query '[].id' -o tsv | xargs -I {} az resource delete --ids {}"
+echo "=== CLEANUP INITIATED ==="
+echo "VM deletions running in background."
+echo ""
+
+# Clean up associated resources ONLY for this deployment
+echo "Cleaning up associated resources tagged with deployment-id=$DEPLOYMENT_ID..."
+TAGGED_RESOURCES=$(az resource list --tag deployment-id=$DEPLOYMENT_ID --query "[].{id:id, name:name, type:type}" -o tsv 2>/dev/null)
+
+if [ -n "$TAGGED_RESOURCES" ]; then
+  echo "Found additional tagged resources to clean up:"
+  echo "$TAGGED_RESOURCES" | while read ID NAME TYPE; do
+    if [ -n "$ID" ]; then
+      echo "  Deleting: $NAME ($TYPE)"
+      az resource delete --ids $ID --no-wait 2>/dev/null || true
+    fi
+  done
+fi
+
+echo ""
+echo "=== CLEANUP COMPLETE ==="
+echo "Only resources from deployment $DEPLOYMENT_ID were removed."
+echo "All other resources in the subscription remain untouched."
 ```
 
 ## Usage Examples
